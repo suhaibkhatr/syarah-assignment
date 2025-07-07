@@ -38,6 +38,8 @@ A Go-based microservice for managing gift store operations with MySQL, Kafka, an
 
 ## Configuration
 
+### Environment Variables
+
 Configuration is managed through environment variables. Copy `.env.example` to `.env` and update the values as needed:
 
 ```env
@@ -46,12 +48,46 @@ MYSQL_DNS=root:rootpass@tcp(mysql:3306)/giftdb?parseTime=true
 
 # Kafka Configuration
 KAFKA_BROKERS=kafka:9092
-KAFKA_TOPICS=gift_events
+KAFKA_TOPICS=giftdb.giftdb.products
 KAFKA_GROUP_ID=gift-store-group
 
 # Elasticsearch Configuration
 ELASTIC_URL=http://elasticsearch:9200
 ```
+
+### Debezium MySQL Connector Setup
+
+To set up the Debezium MySQL connector, run the following command after starting the services:
+
+```bash
+curl --location 'http://localhost:8083/connectors' \
+--header 'Content-Type: application/json' \
+--data '{
+  "name": "giftdb-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+    "database.hostname": "mysql",
+    "database.port": "3306",
+    "database.user": "root",
+    "database.password": "rootpass",
+    "database.server.id": "184054",
+    "database.include.list": "giftdb",
+    "topic.prefix": "giftdb",
+    "schema.history.internal.kafka.bootstrap.servers": "kafka:9094",
+    "schema.history.internal.kafka.topic": "schema-changes.giftdb"
+  }
+}'
+```
+
+This will create a Debezium MySQL connector that:
+- Connects to MySQL at `mysql:3306`
+- Monitors the `giftdb` database
+- Writes changes to Kafka topics with the prefix `giftdb`
+- Stores schema history in a Kafka topic
+
+You can verify the connector is running by visiting:
+- Connector status: http://localhost:8083/connectors/giftdb-connector/status
+- List all connectors: http://localhost:8083/connectors
 
 ### Environment Variables
 

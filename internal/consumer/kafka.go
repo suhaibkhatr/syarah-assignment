@@ -1,136 +1,118 @@
 package consumer
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	"gift-store/internal/config"
-	"gift-store/internal/sink"
-	"gift-store/internal/util"
+	"gift-store/internal/consumer/handlers"
 	"log"
+	"sync"
+	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
-// Main Debezium message structure
 type DebeziumMessage struct {
-	Schema  DebeziumSchema  `json:"schema"`
 	Payload DebeziumPayload `json:"payload"`
 }
 
-// Schema structure (optional to parse, but useful for understanding)
-type DebeziumSchema struct {
-	Type     string        `json:"type"`
-	Fields   []SchemaField `json:"fields"`
-	Optional bool          `json:"optional"`
-	Name     string        `json:"name"`
-	Version  int           `json:"version,omitempty"`
-}
-
-type SchemaField struct {
-	Type       string            `json:"type"`
-	Fields     []SchemaField     `json:"fields,omitempty"`
-	Optional   bool              `json:"optional"`
-	Field      string            `json:"field"`
-	Name       string            `json:"name,omitempty"`
-	Version    int               `json:"version,omitempty"`
-	Default    interface{}       `json:"default,omitempty"`
-	Parameters map[string]string `json:"parameters,omitempty"`
-}
-
-// Payload structure
 type DebeziumPayload struct {
-	Before      map[string]interface{} `json:"before"`
-	After       map[string]interface{} `json:"after"`
-	Source      DebeziumSource         `json:"source"`
-	Transaction *DebeziumTransaction   `json:"transaction"`
-	Op          string                 `json:"op"`
-	TsMs        *int64                 `json:"ts_ms"`
-	TsUs        *int64                 `json:"ts_us"`
-	TsNs        *int64                 `json:"ts_ns"`
+	Before map[string]interface{} `json:"before"`
+	After  map[string]interface{} `json:"after"`
+	Op     string                 `json:"op"`
 }
 
-// Source information
-type DebeziumSource struct {
-	Version   string  `json:"version"`
-	Connector string  `json:"connector"`
-	Name      string  `json:"name"`
-	TsMs      int64   `json:"ts_ms"`
-	Snapshot  *string `json:"snapshot"`
-	Db        string  `json:"db"`
-	Sequence  *string `json:"sequence"`
-	TsUs      *int64  `json:"ts_us"`
-	TsNs      *int64  `json:"ts_ns"`
-	Table     *string `json:"table"`
-	ServerID  int64   `json:"server_id"`
-	Gtid      *string `json:"gtid"`
-	File      string  `json:"file"`
-	Pos       int64   `json:"pos"`
-	Row       int32   `json:"row"`
-	Thread    *int64  `json:"thread"`
-	Query     *string `json:"query"`
+type Consumer struct {
+	kafkaConsumer   *kafka.Consumer
+	handlerRegistry *handlers.HandlerRegistry
+	wg              sync.WaitGroup
 }
 
-// Transaction information
-type DebeziumTransaction struct {
-	ID                  string `json:"id"`
-	TotalOrder          int64  `json:"total_order"`
-	DataCollectionOrder int64  `json:"data_collection_order"`
-}
-
-func ListenAndSync(cfg config.AppConfig, sink *sink.ElasticSink) {
-	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": cfg.Kafka_Brokers,
-		"group.id":          cfg.Kafka_Group_ID,
-		"auto.offset.reset": "earliest",
+func NewConsumer(cfg config.AppConfig, handlerRegistry *handlers.HandlerRegistry) (*Consumer, error) {
+	c, err := kafka.NewConsumer(&kafka.ConfigMap{
+		"bootstrap.servers":  cfg.Kafka_Brokers,
+		"group.id":           cfg.Kafka_Group_ID,
+		"auto.offset.reset":  "earliest",
+		"enable.auto.commit": false,
 	})
 	if err != nil {
-		log.Fatalln(err)
+		return nil, fmt.Errorf("failed to create consumer: %v", err)
 	}
 
-	err = consumer.SubscribeTopics(cfg.Kafka_Topic, nil)
-	if err != nil {
-		log.Fatalln(err)
+	// Subscribe to all configured topics
+	if err := c.SubscribeTopics(cfg.Kafka_Topic, nil); err != nil {
+		return nil, fmt.Errorf("failed to subscribe to topics: %v", err)
 	}
 
-	fmt.Println("Listening for changes...")
+	return &Consumer{
+		kafkaConsumer:   c,
+		handlerRegistry: handlerRegistry,
+	}, nil
+}
+
+// Start starts the consumer in a separate goroutine
+func (c *Consumer) Start(ctx context.Context) {
+	c.wg.Add(1)
+	go c.consume(ctx)
+}
+
+// Wait waits for the consumer to finish
+func (c *Consumer) Wait() {
+	c.wg.Wait()
+}
+
+// Close closes the consumer
+func (c *Consumer) Close() error {
+	c.wg.Wait()
+	return c.kafkaConsumer.Close()
+}
+
+// consume processes messages from Kafka
+func (c *Consumer) consume(ctx context.Context) {
+	defer c.wg.Done()
+
+	// Create a ticker for polling with a small interval
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
 	for {
-		msg, err := consumer.ReadMessage(-1)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		var event DebeziumMessage
-		fmt.Println(msg.TopicPartition.Topic)
-		err = json.Unmarshal(msg.Value, &event)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		fmt.Println(event.Payload.Source.Name, event.Payload.Source.Table)
-		switch event.Payload.Op {
-		case "c", "u":
-			product, err := util.MapToProduct(event.Payload.After)
-			if err != nil {
-				log.Println(err)
+		select {
+		case <-ctx.Done():
+			log.Println("Consumer context cancelled, shutting down...")
+			return
+		case <-ticker.C:
+			// Use Poll instead of ReadMessage to make it more responsive to context cancellation
+			event := c.kafkaConsumer.Poll(100) // 100ms timeout
+			if event == nil {
 				continue
 			}
-			err = sink.InsertOrUpdate(*product, "products")
-			if err != nil {
-				log.Println(err)
-			} else {
-				log.Println("Product inserted or updated:", product.ID)
-			}
-		case "d":
-			product, err := util.MapToProduct(event.Payload.Before)
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-			err = sink.Delete(product.ID, "products")
-			if err != nil {
-				log.Println(err)
-			} else {
-				log.Println("Product deleted:", product.ID)
+
+			switch e := event.(type) {
+			case *kafka.Message:
+				// Get the handler for this topic
+				handler := c.handlerRegistry.GetHandler(*e.TopicPartition.Topic)
+				if handler == nil {
+					log.Printf("No handler found for topic: %s\n", *e.TopicPartition.Topic)
+					continue
+				}
+
+				// Process the message with the appropriate handler
+				if err := handler.Handle(ctx, e.Value); err != nil {
+					log.Printf("Error processing message: %v\n", err)
+					continue
+				}
+
+				// Commit the offset after successful processing
+				if _, err := c.kafkaConsumer.CommitMessage(e); err != nil {
+					log.Printf("Error committing offset: %v\n", err)
+				}
+
+			case kafka.Error:
+				if e.Code() == kafka.ErrAllBrokersDown {
+					log.Println("All brokers are down. Retrying...")
+				} else {
+					log.Printf("Kafka error: %v\n", e)
+				}
 			}
 		}
 	}

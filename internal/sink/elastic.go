@@ -3,16 +3,14 @@ package sink
 import (
 	"context"
 	"gift-store/internal/config"
-	"gift-store/internal/models"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/olivere/elastic/v7"
 )
 
 type ElasticSink struct {
-	es *elastic.Client
+	Es *elastic.Client
 }
 
 func NewSink(cfg config.AppConfig) *ElasticSink {
@@ -37,22 +35,5 @@ func NewSink(cfg config.AppConfig) *ElasticSink {
 	}
 	log.Printf("Connected to Elasticsearch (version: %s)", info.Version.Number)
 
-	return &ElasticSink{es: es}
-}
-
-func (e *ElasticSink) InsertOrUpdate(p models.Product, index string) error {
-	_, err := e.es.Index().
-		Index(index).
-		Id(strconv.Itoa(p.ID)).
-		BodyJson(p).
-		Do(context.Background())
-	return err
-}
-
-func (e *ElasticSink) Delete(id int, index string) error {
-	_, err := e.es.Delete().
-		Index(index).
-		Id(strconv.Itoa(id)).
-		Do(context.Background())
-	return err
+	return &ElasticSink{Es: es}
 }

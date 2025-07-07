@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"gift-store/internal/repo/elastic"
-	"gift-store/internal/sink"
 	"gift-store/internal/util"
 	"log"
 )
@@ -23,9 +22,9 @@ type ProductHandler struct {
 	repo *elastic.ProductRepo
 }
 
-func NewProductHandler(sink *sink.ElasticSink) *ProductHandler {
+func NewProductHandler(repo *elastic.ProductRepo) *ProductHandler {
 	return &ProductHandler{
-		repo: elastic.NewProductRepo(sink),
+		repo: repo,
 	}
 }
 

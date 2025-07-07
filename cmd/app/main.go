@@ -45,7 +45,7 @@ func main() {
 
 	// Initialize the handler registry
 	handlerRegistry := handlers.NewHandlerRegistry(
-		handlers.NewProductHandler(esSink),
+		handlers.NewProductHandler(productElasticRepo),
 		// Add other handlers here as needed
 	)
 

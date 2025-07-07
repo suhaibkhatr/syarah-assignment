@@ -7,7 +7,7 @@ MySQL:
 Kafka:
   Brokers:
     - "localhost:9092"
-  Topic: "giftdb.products"
+  Topic: "giftdb.giftdb.products"
   GroupID: "gift-sync-group"
 
 Elastic:

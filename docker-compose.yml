@@ -11,53 +11,42 @@ services:
       - mysql_data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
-  zookeeper:
-    container_name: zoo
-    image: confluentinc/cp-zookeeper:7.3.2
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-    ports:
-      - "2181:2181"
-
   kafka:
+    image: bitnami/kafka:latest
     container_name: kafka
-    image: confluentinc/cp-kafka:7.3.2
-    depends_on:
-      - zookeeper
     ports:
       - "9092:9092"
+      - "9094:9094"
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_LISTENERS=INTERNAL://:9094,CONTROLLER://:9093,EXTERNAL://:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=INTERNAL://kafka:9094,EXTERNAL://localhost:9092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=INTERNAL
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      - KAFKA_KRAFT_CLUSTER_ID=some-unique-cluster-id
+      - KAFKA_CFG_MESSAGE_MAX_BYTES=10485760
+      - KAFKA_CFG_REPLICA_FETCH_MAX_BYTES=10485760
+      - KAFKA_CFG_MAX_REQUEST_SIZE=10485760
+    volumes:
+      - kafka_data:/bitnami/kafka
 
   connect:
-    image: confluentinc/cp-kafka-connect:7.3.2
+    image: quay.io/debezium/connect:3.0
     container_name: connect
     depends_on:
       - kafka
     ports:
       - "8083:8083"
     environment:
-      CONNECT_BOOTSTRAP_SERVERS: kafka:9092
-      CONNECT_REST_PORT: 8083
-      CONNECT_GROUP_ID: kafka-connect-group
-      CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
-      CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
-      CONNECT_STATUS_STORAGE_TOPIC: connect-statuses
-      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_PLUGIN_PATH: /usr/share/java,/etc/kafka-connect/jars
-      CONNECT_REST_ADVERTISED_HOST_NAME: connect
-    volumes:
-      - ./connect-plugins:/etc/kafka-connect/jars
+      BOOTSTRAP_SERVERS: kafka:9094
+      GROUP_ID: kafka-connect-group
+      CONFIG_STORAGE_TOPIC: connect-configs
+      OFFSET_STORAGE_TOPIC: connect-offsets
+      STATUS_STORAGE_TOPIC: connect-statuses
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.10.2
@@ -71,8 +60,27 @@ services:
       - "9200:9200"
     volumes:
       - esdata:/usr/share/elasticsearch/data
+      
+  gift-store:
+    build: .
+    container_name: gift-store
+    depends_on:
+      - mysql
+      - kafka
+      - elasticsearch
+    environment:
+      - MYSQL_HOST=mysql
+      - KAFKA_BROKERS=kafka:9092
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    volumes:
+      - ./config.yaml:/app/config.yaml
 
+networks:
+  default:
+    driver: bridge
 
 volumes:
   mysql_data:
   esdata:
+  kafka_data:
+  connect-plugins:

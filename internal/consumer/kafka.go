@@ -6,8 +6,9 @@ import (
 	"gift-store/internal/config"
 	"gift-store/internal/models"
 	"gift-store/internal/sink"
-	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"log"
+
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
 type DebeziumPayload struct {

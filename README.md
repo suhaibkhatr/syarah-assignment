@@ -30,7 +30,29 @@ A Go-based microservice for managing gift store operations with MySQL, Kafka, an
    docker-compose up -d
    ```
 
-4. The application will start and connect to the required services.
+4. **Important**: After starting the services, you need to set up the Debezium MySQL connector. Run the following command to configure it:
+  ```bash
+  curl --location 'http://localhost:8083/connectors' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "gift_store-connector",
+    "config": {
+      "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+      "database.hostname": "mysql",
+      "database.port": "3306",
+      "database.user": "root",
+      "database.password": "rootpass",
+      "database.server.id": "184054",
+      "database.include.list": "gift_store",
+      "topic.prefix": "gift_store",
+      "schema.history.internal.kafka.bootstrap.servers": "kafka:9094",
+      "schema.history.internal.kafka.topic": "schema-changes.gift_store"
+    }
+  }'
+  ```
+   This step is crucial for enabling real-time data synchronization between MySQL and Elasticsearch.
+
+5. The application will start and connect to the required services.
 
 ## Services
 

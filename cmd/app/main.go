@@ -20,7 +20,7 @@ func main() {
 		log.Fatal("Error reading products:", err)
 	}
 	for _, p := range products {
-		err := sink.InsertOrUpdate(p)
+		err := sink.InsertOrUpdate(p, "products")
 		if err != nil {
 			log.Fatal("Error inserting product:", err)
 		}

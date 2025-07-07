@@ -44,11 +44,11 @@ Configuration is managed through environment variables. Copy `.env.example` to `
 
 ```env
 # MySQL Configuration
-MYSQL_DNS=root:rootpass@tcp(mysql:3306)/giftdb?parseTime=true
+MYSQL_DNS=root:rootpass@tcp(mysql:3306)/gift_store?parseTime=true
 
 # Kafka Configuration
 KAFKA_BROKERS=kafka:9092
-KAFKA_TOPICS=giftdb.giftdb.products
+KAFKA_TOPICS=gift_store.gift_store.products
 KAFKA_GROUP_ID=gift-store-group
 
 # Elasticsearch Configuration
@@ -63,7 +63,7 @@ To set up the Debezium MySQL connector, run the following command after starting
 curl --location 'http://localhost:8083/connectors' \
 --header 'Content-Type: application/json' \
 --data '{
-  "name": "giftdb-connector",
+  "name": "gift_store-connector",
   "config": {
     "connector.class": "io.debezium.connector.mysql.MySqlConnector",
     "database.hostname": "mysql",
@@ -71,22 +71,22 @@ curl --location 'http://localhost:8083/connectors' \
     "database.user": "root",
     "database.password": "rootpass",
     "database.server.id": "184054",
-    "database.include.list": "giftdb",
-    "topic.prefix": "giftdb",
+    "database.include.list": "gift_store",
+    "topic.prefix": "gift_store",
     "schema.history.internal.kafka.bootstrap.servers": "kafka:9094",
-    "schema.history.internal.kafka.topic": "schema-changes.giftdb"
+    "schema.history.internal.kafka.topic": "schema-changes.gift_store"
   }
 }'
 ```
 
 This will create a Debezium MySQL connector that:
 - Connects to MySQL at `mysql:3306`
-- Monitors the `giftdb` database
-- Writes changes to Kafka topics with the prefix `giftdb`
+- Monitors the `gift_store` database
+- Writes changes to Kafka topics with the prefix `gift_store`
 - Stores schema history in a Kafka topic
 
 You can verify the connector is running by visiting:
-- Connector status: http://localhost:8083/connectors/giftdb-connector/status
+- Connector status: http://localhost:8083/connectors/gift_store-connector/status
 - List all connectors: http://localhost:8083/connectors
 
 ### Environment Variables

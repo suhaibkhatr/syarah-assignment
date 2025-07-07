@@ -114,22 +114,24 @@ func ListenAndSync(cfg config.AppConfig, sink *sink.ElasticSink) {
 				log.Println(err)
 				continue
 			}
-			err = sink.InsertOrUpdate(*product)
+			err = sink.InsertOrUpdate(*product, "products")
 			if err != nil {
 				log.Println(err)
+			} else {
+				log.Println("Product inserted or updated:", product.ID)
 			}
-			log.Println("Product inserted or updated:", product.ID)
 		case "d":
 			product, err := util.MapToProduct(event.Payload.Before)
 			if err != nil {
 				log.Println(err)
 				continue
 			}
-			err = sink.Delete(product.ID)
+			err = sink.Delete(product.ID, "products")
 			if err != nil {
 				log.Println(err)
+			} else {
+				log.Println("Product deleted:", product.ID)
 			}
-			log.Println("Product deleted:", product.ID)
 		}
 	}
 }

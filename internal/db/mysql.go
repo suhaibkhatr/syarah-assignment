@@ -14,7 +14,7 @@ type MySQLSource struct {
 }
 
 func NewSource(cfg config.AppConfig) *MySQLSource {
-	db, err := sql.Open("mysql", cfg.MYSQL_DNS)
+	db, err := sql.Open("mysql", cfg.DB_USER+":"+cfg.DB_PASSWORD+"@tcp("+cfg.DB_HOST+":"+cfg.DB_PORT+")/"+cfg.DB_NAME)
 	if err != nil {
 		log.Fatalln(err)
 	}

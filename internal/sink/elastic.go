@@ -40,18 +40,18 @@ func NewSink(cfg config.AppConfig) *ElasticSink {
 	return &ElasticSink{es: es}
 }
 
-func (e *ElasticSink) InsertOrUpdate(p models.Product) error {
+func (e *ElasticSink) InsertOrUpdate(p models.Product, index string) error {
 	_, err := e.es.Index().
-		Index("products").
+		Index(index).
 		Id(strconv.Itoa(p.ID)).
 		BodyJson(p).
 		Do(context.Background())
 	return err
 }
 
-func (e *ElasticSink) Delete(id int) error {
+func (e *ElasticSink) Delete(id int, index string) error {
 	_, err := e.es.Delete().
-		Index("products").
+		Index(index).
 		Id(strconv.Itoa(id)).
 		Do(context.Background())
 	return err

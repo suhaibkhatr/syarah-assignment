@@ -42,7 +42,6 @@ func main() {
 
 	// Create a context that can be cancelled
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	// Initialize the handler registry
 	handlerRegistry := handlers.NewHandlerRegistry(
@@ -66,14 +65,7 @@ func main() {
 	// Wait for interrupt signal
 	<-sigchan
 	log.Println("Shutting down...")
-	
-	// Cancel the context to signal the consumer to stop
 	cancel()
-	
-	// Close the consumer
-	if err := kafkaConsumer.Close(); err != nil {
-		log.Printf("Error closing Kafka consumer: %v", err)
-	}
-	
+
 	log.Println("Shutdown completed")
 }

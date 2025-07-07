@@ -20,13 +20,11 @@ type DebeziumMessage struct {
 }
 
 type ProductHandler struct {
-	sink *sink.ElasticSink
 	repo *elastic.ProductRepo
 }
 
 func NewProductHandler(sink *sink.ElasticSink) *ProductHandler {
 	return &ProductHandler{
-		sink: sink,
 		repo: elastic.NewProductRepo(sink),
 	}
 }

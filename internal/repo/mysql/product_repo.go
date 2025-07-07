@@ -18,7 +18,6 @@ func NewProductRepo(source *db.MySQLSource) *ProductRepo {
 }
 
 func (s *ProductRepo) GetAllProducts() ([]models.Product, error) {
-	fmt.Println("GetAllProducts")
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	query := `SELECT id, name, description, price, category, gift_category, age_group, brand, is_available, created_at, updated_at FROM products`

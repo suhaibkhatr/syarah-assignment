@@ -41,7 +41,7 @@ RUN apt-get update && \
 COPY --from=builder /app/gift-store .
 
 # Copy configuration files
-COPY --from=builder /app/config.yaml .
+COPY --from=builder /app/.env .
 
 # Expose port
 EXPOSE 8080

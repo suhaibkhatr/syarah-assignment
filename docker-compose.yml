@@ -64,8 +64,22 @@ services:
   gift-store:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: cmd/app/Dockerfile
     container_name: gift-store
+    depends_on:
+      - mysql
+      - kafka
+      - elasticsearch
+    env_file:
+      - .env
+
+  gift-store-api:
+    build:
+      context: .
+      dockerfile: cmd/api/Dockerfile
+    container_name: gift-store-api
+    ports:
+      - "8080:8080"
     depends_on:
       - mysql
       - kafka

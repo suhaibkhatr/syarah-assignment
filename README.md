@@ -1,6 +1,10 @@
 # Gift Store Service
 
-A Go-based microservice for managing gift store operations with MySQL, Kafka, and Elasticsearch integration.
+A Go-based microservice for managing gift store operations with MySQL, Kafka, and Elasticsearch integration. The system provides:
+
+- Real-time data synchronization between MySQL and Elasticsearch using Debezium and Kafka
+- RESTful API for managing products
+- Scalable and distributed architecture
 
 ## Prerequisites
 
@@ -35,6 +39,7 @@ A Go-based microservice for managing gift store operations with MySQL, Kafka, an
 - **Kafka Connect**: Debezium connector service on port 8083
 - **Elasticsearch**: Search and analytics engine on port 9200
 - **Gift Store**: Main application service
+- **Gift Store API**: REST API service running on port 8080
 
 ## Configuration
 
@@ -96,6 +101,139 @@ You can verify the connector is running by visiting:
 - `KAFKA_TOPICS`: Comma-separated list of Kafka topics to subscribe to
 - `KAFKA_GROUP_ID`: Consumer group ID for Kafka
 - `ELASTIC_URL`: Elasticsearch server URL
+
+## API Endpoints
+
+### Products
+
+#### Get All Products
+```
+GET /api/v1/products
+```
+
+**Response**
+```json
+[
+  {
+    "id": 1,
+    "name": "Gift Card",
+    "description": "$50 Gift Card",
+    "price": 50.0,
+    "category": "Gift Cards",
+    "gift_category": "General",
+    "age_group": "All Ages",
+    "brand": "Gift Store",
+    "is_available": true,
+    "created_at": "2025-07-07T00:00:00Z",
+    "updated_at": "2025-07-07T00:00:00Z"
+  }
+]
+```
+
+#### Get Product by ID
+```
+GET /api/v1/products/:id
+```
+
+**Response**
+```json
+{
+  "id": 1,
+  "name": "Gift Card",
+  "description": "$50 Gift Card",
+  "price": 50.0,
+  "category": "Gift Cards",
+  "gift_category": "General",
+  "age_group": "All Ages",
+  "brand": "Gift Store",
+  "is_available": true,
+  "created_at": "2025-07-07T00:00:00Z",
+  "updated_at": "2025-07-07T00:00:00Z"
+}
+```
+
+#### Create Product
+```
+POST /api/v1/products
+```
+
+**Request Body**
+```json
+{
+  "name": "New Gift Card",
+  "description": "$100 Gift Card",
+  "price": 100.0,
+  "category": "Gift Cards",
+  "gift_category": "Premium",
+  "age_group": "All Ages",
+  "brand": "Gift Store",
+  "is_available": true
+}
+```
+
+**Response**
+```json
+{
+  "id": 2,
+  "name": "New Gift Card",
+  "description": "$100 Gift Card",
+  "price": 100.0,
+  "category": "Gift Cards",
+  "gift_category": "Premium",
+  "age_group": "All Ages",
+  "brand": "Gift Store",
+  "is_available": true,
+  "created_at": "2025-07-07T00:00:00Z",
+  "updated_at": "2025-07-07T00:00:00Z"
+}
+```
+
+#### Update Product
+```
+PUT /api/v1/products/:id
+```
+
+**Request Body**
+```json
+{
+  "name": "Updated Gift Card",
+  "description": "$100 Gift Card (Updated)",
+  "price": 99.99,
+  "is_available": false
+}
+```
+
+**Response**
+```json
+{
+  "message": "Product updated successfully",
+  "product": {
+    "id": 2,
+    "name": "Updated Gift Card",
+    "description": "$100 Gift Card (Updated)",
+    "price": 99.99,
+    "category": "Gift Cards",
+    "gift_category": "Premium",
+    "age_group": "All Ages",
+    "brand": "Gift Store",
+    "is_available": false,
+    "created_at": "2025-07-07T00:00:00Z",
+    "updated_at": "2025-07-07T01:00:00Z"
+  }
+}
+```
+
+#### Delete Product
+```
+DELETE /api/v1/products/:id
+```
+
+**Response**
+```json
+{
+  "message": "Product deleted successfully"
+}
+```
 
 ## Development
 

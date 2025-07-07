@@ -10,7 +10,8 @@ import (
 )
 
 func main() {
-	source := db.NewSource(config.Load())
+	config := config.Load()
+	source := db.NewSource(config)
 	productRepo := mysql.NewProductRepo(source)
 	productService := services.NewProductService(productRepo)
 	g := gin.Default()
@@ -22,5 +23,5 @@ func main() {
 		v1.PUT("/products/:id", productService.Update)
 		v1.DELETE("/products/:id", productService.Delete)
 	}
-	g.Run(":8080")
+	g.Run(":" + config.APP_PORT)
 }

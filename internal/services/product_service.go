@@ -22,7 +22,7 @@ func (s *ProductService) GetAllProducts(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
-	c.JSON(http.StatusOK, products)
+	c.JSON(http.StatusOK, gin.H{"products": products})
 }
 
 func (s *ProductService) GetProductByID(c *gin.Context) {

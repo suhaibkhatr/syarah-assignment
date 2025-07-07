@@ -1,0 +1,9 @@
+data.db
+
+.envrc
+.env
+tmp
+ecom
+go.sum
+go-practice
+.vscode

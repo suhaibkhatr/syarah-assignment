@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"gift-store/internal/config"
 	"gift-store/internal/models"
+	"log"
+
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -12,9 +14,9 @@ type MySQLSource struct {
 }
 
 func NewSource(cfg config.AppConfig) *MySQLSource {
-	db, err := sql.Open("mysql", cfg.MySQL.DSN)
+	db, err := sql.Open("mysql", cfg.MYSQL_DNS)
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 	return &MySQLSource{db: db}
 }

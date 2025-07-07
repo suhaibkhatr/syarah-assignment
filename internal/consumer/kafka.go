@@ -2,7 +2,6 @@ package consumer
 
 import (
 	"encoding/json"
-	"fmt"
 	"gift-store/internal/config"
 	"gift-store/internal/models"
 	"gift-store/internal/sink"
@@ -21,17 +20,17 @@ type DebeziumPayload struct {
 
 func ListenAndSync(cfg config.AppConfig, sink *sink.ElasticSink) {
 	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": fmt.Sprintf("%s", cfg.Kafka.Brokers[0]),
-		"group.id":          cfg.Kafka.GroupID,
+		"bootstrap.servers": cfg.Kafka_Brokers,
+		"group.id":          cfg.Kafka_Group_ID,
 		"auto.offset.reset": "earliest",
 	})
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
-	err = consumer.Subscribe(cfg.Kafka.Topic, nil)
+	err = consumer.SubscribeTopics(cfg.Kafka_Topic, nil)
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
 	for {

@@ -1,34 +1,26 @@
 package config
 
 import (
-	"github.com/spf13/viper"
 	"log"
+	"strings"
+
+	"github.com/spf13/viper"
 )
 
 type AppConfig struct {
-	SourceType string
-	SinkType   string
+	MYSQL_DNS string
 
-	MySQL struct {
-		DSN string
-	}
+	Kafka_Brokers  string
+	Kafka_Topic    []string
+	Kafka_Group_ID string
 
-	Kafka struct {
-		Brokers []string
-		Topic   string
-		GroupID string
-	}
-
-	Elastic struct {
-		URL   string
-		Index string
-	}
+	Elastic_URL   string
+	Elastic_Index string
 }
 
 func Load() AppConfig {
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(".")
+	viper.SetConfigFile(".env")
+	viper.AutomaticEnv()
 
 	err := viper.ReadInConfig()
 	if err != nil {
@@ -40,6 +32,8 @@ func Load() AppConfig {
 	if err != nil {
 		log.Fatalf("Unable to decode config into struct: %v", err)
 	}
+
+	cfg.Kafka_Topic = strings.Split(viper.GetString("KAFKA_TOPICS"), ",")
 
 	return cfg
 }

@@ -10,7 +10,7 @@ import (
 
 func main() {
 	cfg := config.Load()
-	log.Println(cfg.Elastic)
+
 	source := db.NewSource(cfg)
 	sink := sink.NewSink(cfg)
 

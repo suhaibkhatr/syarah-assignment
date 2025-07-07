@@ -19,7 +19,7 @@ type ElasticSink struct {
 func NewSink(cfg config.AppConfig) *ElasticSink {
 	// Add retry on failure and sniffing disabled for better connection handling
 	es, err := elastic.NewClient(
-		elastic.SetURL(cfg.Elastic.URL),
+		elastic.SetURL(cfg.Elastic_URL),
 		elastic.SetSniff(false), // Disable sniffing in development
 		elastic.SetHealthcheck(true),
 		elastic.SetHealthcheckTimeoutStartup(30*time.Second),
@@ -29,7 +29,7 @@ func NewSink(cfg config.AppConfig) *ElasticSink {
 	}
 
 	// Check if Elasticsearch is available
-	info, code, err := es.Ping(cfg.Elastic.URL).Do(context.Background())
+	info, code, err := es.Ping(cfg.Elastic_URL).Do(context.Background())
 	if err != nil {
 		log.Fatalf("Elasticsearch is not available: %v", err)
 	}
@@ -38,7 +38,7 @@ func NewSink(cfg config.AppConfig) *ElasticSink {
 	}
 	log.Printf("Connected to Elasticsearch (version: %s)", info.Version.Number)
 
-	return &ElasticSink{es: es, index: cfg.Elastic.Index}
+	return &ElasticSink{es: es, index: cfg.Elastic_Index}
 }
 
 func (e *ElasticSink) InsertOrUpdate(p models.Product) error {

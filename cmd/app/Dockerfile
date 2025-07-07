@@ -25,7 +25,7 @@ RUN go mod tidy
 COPY . .
 
 # Build all applications using Makefile
-RUN go build -o gift-store cmd/app/main.go
+RUN go build -o gift-store-api cmd/api/main.go
 
 # Final stage
 FROM ubuntu:22.04
@@ -38,7 +38,7 @@ RUN apt-get update && \
 	rm -rf /var/lib/apt/lists/*
 
 # Copy the built applications
-COPY --from=builder /app/gift-store .
+COPY --from=builder /app/gift-store-api .
 
 # Copy configuration files
 COPY --from=builder /app/.env .
@@ -47,4 +47,4 @@ COPY --from=builder /app/.env .
 EXPOSE 8080
 
 # Command to run the executable
-CMD ["./gift-store"]
+CMD ["./gift-store-api"]

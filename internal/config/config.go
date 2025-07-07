@@ -14,8 +14,7 @@ type AppConfig struct {
 	Kafka_Topic    []string
 	Kafka_Group_ID string
 
-	Elastic_URL   string
-	Elastic_Index string
+	Elastic_URL string
 }
 
 func Load() AppConfig {

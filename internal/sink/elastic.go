@@ -12,8 +12,7 @@ import (
 )
 
 type ElasticSink struct {
-	es    *elastic.Client
-	index string
+	es *elastic.Client
 }
 
 func NewSink(cfg config.AppConfig) *ElasticSink {
@@ -38,12 +37,12 @@ func NewSink(cfg config.AppConfig) *ElasticSink {
 	}
 	log.Printf("Connected to Elasticsearch (version: %s)", info.Version.Number)
 
-	return &ElasticSink{es: es, index: cfg.Elastic_Index}
+	return &ElasticSink{es: es}
 }
 
 func (e *ElasticSink) InsertOrUpdate(p models.Product) error {
 	_, err := e.es.Index().
-		Index(e.index).
+		Index("products").
 		Id(strconv.Itoa(p.ID)).
 		BodyJson(p).
 		Do(context.Background())
@@ -52,7 +51,7 @@ func (e *ElasticSink) InsertOrUpdate(p models.Product) error {
 
 func (e *ElasticSink) Delete(id int) error {
 	_, err := e.es.Delete().
-		Index(e.index).
+		Index("products").
 		Id(strconv.Itoa(id)).
 		Do(context.Background())
 	return err

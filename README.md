@@ -15,18 +15,18 @@ A Go-based microservice for managing gift store operations with MySQL, Kafka, an
    cd gift-store
    ```
 
-2. Create a `config.yaml` file based on the example configuration:
-   ```yaml
-   # Copy and customize this configuration
-   # Make sure to update credentials and connection details
+2. Copy the example environment file and update the values:
+   ```bash
+   cp .env.example .env
    ```
+   Edit the `.env` file with your configuration.
 
 3. Start the services using Docker Compose:
    ```bash
    docker-compose up -d
    ```
 
-4. Wait for all services to be fully started before proceeding.
+4. The application will start and connect to the required services.
 
 ## Services
 
@@ -38,25 +38,28 @@ A Go-based microservice for managing gift store operations with MySQL, Kafka, an
 
 ## Configuration
 
-Create a `config.yaml` file in the root directory with the following structure:
+Configuration is managed through environment variables. Copy `.env.example` to `.env` and update the values as needed:
 
-```yaml
-database:
-  host: mysql
-  port: 3306
-  name: giftdb
-  user: root
-  password: rootpass
+```env
+# MySQL Configuration
+MYSQL_DNS=root:rootpass@tcp(mysql:3306)/giftdb?parseTime=true
 
-kafka:
-  brokers: kafka:9092
-  topics:
-    - gift_events
+# Kafka Configuration
+KAFKA_BROKERS=kafka:9092
+KAFKA_TOPICS=gift_events
+KAFKA_GROUP_ID=gift-store-group
 
-elasticsearch:
-  url: http://elasticsearch:9200
-  index: gifts
+# Elasticsearch Configuration
+ELASTIC_URL=http://elasticsearch:9200
 ```
+
+### Environment Variables
+
+- `MYSQL_DNS`: MySQL connection string
+- `KAFKA_BROKERS`: Comma-separated list of Kafka brokers
+- `KAFKA_TOPICS`: Comma-separated list of Kafka topics to subscribe to
+- `KAFKA_GROUP_ID`: Consumer group ID for Kafka
+- `ELASTIC_URL`: Elasticsearch server URL
 
 ## Development
 
